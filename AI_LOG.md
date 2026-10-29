@@ -10,6 +10,7 @@
 | Terraform | 1.10.5 | `fmt` and `validate` (no apply, no AWS access) |
 | actionlint, jq | 1.7.12, 1.7.1 | Linting the workflow; the plan-gate logic |
 | Claude Code web search and fetch | n/a | AWS docs and Terraform provider source (links in `FINDINGS.md`) |
+| Devin (Cognition) | desktop app | Second opinion on eight follow-up questions about the work; first draft of this review section and the CTO paragraph |
 
 Nothing was deployed. No AWS account was used.
 
@@ -30,7 +31,7 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 | 7 | A mistake in my own check | Claude Code | A script comparing Trivy runs read the wrong JSON field, which briefly suggested the tool was non-deterministic | Caught by re-running against the saved output; fixed the script; results were consistent all along |
 | 8 | Guardrail workflow | Claude Code | Wrote the workflow, tripwire script and plan gate; tested locally (see `GUARDRAIL.md`) | Used. The static job passed on GitHub (manual run); the plan job has never run against real AWS |
 | 9 | `FINDINGS.md`, `ROLLOUT.md`, `INCIDENT.md` | Claude Code | Drafted each from the analysis above; trimmed the rollout from 807 to about 650 words to fit one page | Drafts. See "My review" below |
-| 10 | CTO summary and reflection | Claude Code | First drafts | **Mine to rewrite.** See below |
+| 10 | CTO summary and reflection | Claude Code, then Devin | Claude's first drafts; Devin redrafted the CTO paragraph to five sentences and drafted "My review" from facts I supplied (time, what I read, what I ran) | **Edited by me before sending** |
 
 ## Decisions I made and directions I gave
 
@@ -39,14 +40,14 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 - Decided not to inspect any real AWS account, so nothing from my employer's systems is in this submission.
 - Directed the rewrite for shorter, more precise writing, and for a HIPAA reference on each finding.
 
-## My answers to the eight problems
+## Answers to the eight follow-up problems
 
-I answered these in my own words. Claude checked them against documentation and built the changes. Two of my answers found flaws in Claude's draft plan:
+I put the eight questions to a second assistant (Devin) for an independent answer, then went through each answer and decided what to adopt. Claude checked the adopted points against documentation and built the changes. Two of those answers found flaws in Claude's draft plan, which is the main reason I asked a second tool:
 
 1. The rollout attached the new narrow policy beside the old one and ran a night with both. IAM permissions add up, so that tests nothing. Replaced with a v2 role and repointing Airflow.
 2. The rollout added exact OIDC `sub` values beside the wildcard. That is an OR, so it proves nothing. Replaced with a second role.
 
-Other changes that came from my answers: S3 data events on all buckets before narrowing anything; `RunTask` and `PassRole` are probably unnecessary on the parser role; check whether partners ever read the landing bucket and whether any share a /24; pin the GitHub trust by `repository_id` and a GitHub Environment; a plan for the PHI already in the logs (restrict access, map every sink, retention under legal hold); alert routing, CloudTrail rules for high-risk calls and an on-call check; database audit logging with `pgaudit`, including its reboot and statement-text risks; root MFA and account-wide S3 Block Public Access as the two cheapest controls; a Deny-all at T+3 in the incident and when to reorder the first steps.
+Other changes adopted from those answers: S3 data events on all buckets before narrowing anything; `RunTask` and `PassRole` are probably unnecessary on the parser role; check whether partners ever read the landing bucket and whether any share a /24; pin the GitHub trust by `repository_id` and a GitHub Environment; a plan for the PHI already in the logs (restrict access, map every sink, retention under legal hold); alert routing, CloudTrail rules for high-risk calls and an on-call check; database audit logging with `pgaudit`, including its reboot and statement-text risks; root MFA and account-wide S3 Block Public Access as the two cheapest controls; a Deny-all at T+3 in the incident and when to reorder the first steps.
 
 Claude's checks and adjustments: `repository_id` is a supported AWS condition key. AWS's docs don't confirm that reads of CloudWatch log events appear in CloudTrail, so the documents say "can't prove" instead of stating it. Two details were adjusted: `ListBucket` is granted on the bucket ARN with a prefix condition, and the role a task runs as comes from its task definition, unless overridden.
 
@@ -62,21 +63,18 @@ During the work I proposed these, and they were checked against documentation be
 
 ## My review
 
-**[TODO before sending: replace this section with what you really did. Be specific and honest. A good version names things you read, tested, changed or disagreed with.]**
-
-- Parts of the work I read line by line and understood:
-- Things I changed or rejected, and why:
-- Things I checked myself (commands I ran, docs I read):
-- Things I'm least sure about:
-- Time I actually spent:
+- **What I read line by line and can explain without notes:** every `CHANGE:` and `NOT CHANGED` in `main.tf`, and why each one passes the three-part test. Same for `ROLLOUT.md`, including why `skip_destroy` has to go live one apply before the log level flips.
+- **What I read but not line by line:** `INCIDENT.md` and the guardrail scripts (`tripwires.sh`, `plan-gate.sh`, the workflow). I know what they do and why. I couldn't walk you through every line yet.
+- **What I changed or threw out:** both scanners said set `storage_encrypted = true`. That's `ForceNew`, so it'd delete the database. No. Same with immutable ECR tags, which break the legacy builds. I dropped the first version of the pipeline denies too: once they sat inside the old policy, the scanners stopped flagging its wildcards. And I replaced two rollout steps ("run both policies for a night", "add the exact `sub` next to the wildcard") because neither one actually tests anything.
+- **What I checked myself:** ran `terraform fmt` and `terraform validate`. Kicked off the workflow on GitHub (`workflow_dispatch`) and watched the static job go green. Read the AWS and provider docs behind the three riskiest calls: `ForceNew` on `storage_encrypted`, Blue/Green encryption, and what S3 counts as a public policy.
+- **What I'm least sure about:** the plan gate's never run against real AWS. I haven't seen `get-bucket-policy-status` say `IsPublic: false` for our two /24s on a real bucket. I don't know if GuardDuty Extended Threat Detection would've caught the Part 4 chain. And the HIPAA breach-notice reasoning is really counsel's call, not mine.
+- **Time:** under 4 hours. Honestly, that's only possible because AI did most of the drafting and the tool runs. My time went on the decisions, and on double-checking anything that could break prod.
 
 ## Reflection: with another hour
 
-**[TODO before sending: rewrite these in your own words and add your own. The ones below are true of the work as it stands.]**
-
-- Run the plan gate against a sandbox AWS account or LocalStack. The static job has run on GitHub (one manual run); the plan job never has, and the `pull_request` trigger is untested.
-- Confirm the S3 "non-public policy" behaviour with `get-bucket-policy-status` on a real bucket. I relied on AWS's documentation.
-- Pin the Actions to commit SHAs, add a secret scanner for git history, and move the tripwires from line patterns to policy-as-code over the plan JSON.
-- Write the Blue/Green runbook as concrete commands and rehearse it on a copy, checking every table has a primary key.
-- Give the alert topic a proper KMS key and key policy instead of leaving it unencrypted.
-- Put the CTO paragraph in front of a non-technical reader, and put real costs (data events, GuardDuty, Multi-AZ) next to the recommendations.
+- Run the plan gate against a sandbox account or LocalStack. It's the check I lean on most to stop a destructive apply, and it's never run for real. The `pull_request` trigger's untested too.
+- Read `INCIDENT.md` and the scripts as closely as I read `main.tf`. I'll get asked about them.
+- Put the same IP-only policy on a throwaway bucket and run `get-bucket-policy-status`. The landing-bucket change rests on AWS's definition of "public", and so far I've only read about it.
+- Turn the Blue/Green encryption into an actual runbook and rehearse it on a copy, starting with "does every table have a primary key?"
+- Pin the Actions to commit SHAs, run gitleaks over history (the DB password's already in there), and give the alert topic its own KMS key.
+- Put monthly costs next to the asks (data events, GuardDuty, Multi-AZ, Transfer Family). A CTO decides on numbers, not adjectives.
