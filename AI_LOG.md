@@ -10,7 +10,7 @@
 | Terraform | 1.10.5 | `fmt` and `validate` (no apply, no AWS access) |
 | actionlint, jq | 1.7.12, 1.7.1 | Linting the workflow; the plan-gate logic |
 | Claude Code web search and fetch | n/a | AWS docs and Terraform provider source (links in `FINDINGS.md`) |
-| Devin (Cognition) | desktop app | Second opinion on eight follow-up questions about the work; first draft of this review section and the CTO paragraph |
+| Second AI assistant | desktop app | Second opinion on eight follow-up questions about the work; first draft of this review section and the CTO paragraph |
 
 Nothing was deployed. No AWS account was used.
 
@@ -31,7 +31,7 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 | 7 | A mistake in my own check | Claude Code | A script comparing Trivy runs read the wrong JSON field, which briefly suggested the tool was non-deterministic | Caught by re-running against the saved output; fixed the script; results were consistent all along |
 | 8 | Guardrail workflow | Claude Code | Wrote the workflow, tripwire script and plan gate; tested locally (see `GUARDRAIL.md`) | Used. The static job passed on GitHub (manual run); the plan job has never run against real AWS |
 | 9 | `FINDINGS.md`, `ROLLOUT.md`, `INCIDENT.md` | Claude Code | Drafted each from the analysis above; trimmed the rollout from 807 to about 650 words to fit one page | Drafts. See "My review" below |
-| 10 | CTO summary and reflection | Claude Code, then Devin | Claude's first drafts; Devin redrafted the CTO paragraph to five sentences and drafted "My review" from facts I supplied (time, what I read, what I ran) | **Edited by me before sending** |
+| 10 | CTO summary and reflection | Claude Code, then a second AI assistant | Claude's first drafts; the second assistant redrafted the CTO paragraph to five sentences and drafted "My review" from facts I supplied (time, what I read, what I ran) | **Edited by me before sending** |
 
 ## Decisions I made and directions I gave
 
@@ -42,7 +42,7 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 
 ## Answers to the eight follow-up problems
 
-I put the eight questions to a second assistant (Devin) for an independent answer, then went through each answer and decided what to adopt. Claude checked the adopted points against documentation and built the changes. Two of those answers found flaws in Claude's draft plan, which is the main reason I asked a second tool:
+I put the eight questions to a second AI assistant for an independent answer, then went through each answer and decided what to adopt. Claude checked the adopted points against documentation and built the changes. Two of those answers found flaws in Claude's draft plan, which is the main reason I asked a second tool:
 
 1. The rollout attached the new narrow policy beside the old one and ran a night with both. IAM permissions add up, so that tests nothing. Replaced with a v2 role and repointing Airflow.
 2. The rollout added exact OIDC `sub` values beside the wildcard. That is an OR, so it proves nothing. Replaced with a second role.
