@@ -28,7 +28,7 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 | 5 | `main.tf` changes | Claude Code | Drafted the changes with a three-part test for inclusion: no destroy/replace, no reboot, no removal of access something unknown may use. Ran `terraform fmt` and `validate` | **Modified during testing, see #6 and #7** |
 | 6 | A mistake caught by testing | Claude Code | First put the new deny statements inside the existing pipeline policy. Scanners then reported its wildcards as fixed. Tested the cause by swapping interpolated ARNs for literals | **Discarded that design.** Moved the denies into a separate policy so the original stays visible and unchanged. Also noted Trivy drops `AWS-0345` whenever any S3 deny is attached |
 | 7 | A mistake in my own check | Claude Code | A script comparing Trivy runs read the wrong JSON field, which briefly suggested the tool was non-deterministic | Caught by re-running against the saved output; fixed the script; results were consistent all along |
-| 8 | Guardrail workflow | Claude Code | Wrote the workflow, tripwire script and plan gate; tested locally (see `GUARDRAIL.md`) | Used. **Not run on GitHub**, and the plan job was never run against real AWS |
+| 8 | Guardrail workflow | Claude Code | Wrote the workflow, tripwire script and plan gate; tested locally (see `GUARDRAIL.md`) | Used. The static job passed on GitHub (manual run); the plan job has never run against real AWS |
 | 9 | `FINDINGS.md`, `ROLLOUT.md`, `INCIDENT.md` | Claude Code | Drafted each from the analysis above; trimmed the rollout from 807 to about 650 words to fit one page | Drafts. See "My review" below |
 | 10 | CTO summary and reflection | Claude Code | First drafts | **Mine to rewrite.** See below |
 
@@ -63,7 +63,7 @@ During the work I proposed these, and they were checked against documentation be
 
 **[TODO before sending: rewrite these in your own words and add your own. The ones below are true of the work as it stands.]**
 
-- Run the workflow on a real GitHub repository and the plan gate against a sandbox AWS account or LocalStack. Everything in Part 2b was tested locally only.
+- Run the plan gate against a sandbox AWS account or LocalStack. The static job has run on GitHub (one manual run); the plan job never has, and the `pull_request` trigger is untested.
 - Confirm the S3 "non-public policy" behaviour with `get-bucket-policy-status` on a real bucket. I relied on AWS's documentation.
 - Pin the Actions to commit SHAs, add a secret scanner for git history, and move the tripwires from line patterns to policy-as-code over the plan JSON.
 - Write the Blue/Green runbook as concrete commands and rehearse it on a copy, checking every table has a primary key.
