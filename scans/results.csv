@@ -1,0 +1,100 @@
+tool,check_id,resource,severity,title,original,fixed
+checkov,CKV2_AWS_10,aws_cloudtrail.main,,Ensure CloudTrail trails are integrated with CloudWatch Logs,FAIL,FAIL
+checkov,CKV2_AWS_3,aws_guardduty_detector.main,,Ensure GuardDuty is enabled to specific org/region,-,FAIL
+checkov,CKV2_AWS_30,aws_db_instance.clinical,,Ensure Postgres RDS as aws_db_instance has Query Logging enabled,FAIL,FAIL
+checkov,CKV2_AWS_5,aws_security_group.pipeline,,Ensure that Security Groups are attached to another resource,FAIL,FAIL
+checkov,CKV2_AWS_6,aws_s3_bucket.audit_logs,,Ensure that S3 bucket has a Public Access block,FAIL,-
+checkov,CKV2_AWS_6,aws_s3_bucket.raw_landing,,Ensure that S3 bucket has a Public Access block,FAIL,-
+checkov,CKV2_AWS_60,aws_db_instance.clinical,,Ensure RDS instance with copy tags to snapshots is enabled,FAIL,FAIL
+checkov,CKV2_AWS_61,aws_s3_bucket.audit_logs,,Ensure that an S3 bucket has a lifecycle configuration,FAIL,FAIL
+checkov,CKV2_AWS_61,aws_s3_bucket.public_assets,,Ensure that an S3 bucket has a lifecycle configuration,FAIL,FAIL
+checkov,CKV2_AWS_61,aws_s3_bucket.raw_landing,,Ensure that an S3 bucket has a lifecycle configuration,FAIL,FAIL
+checkov,CKV2_AWS_62,aws_s3_bucket.audit_logs,,Ensure S3 buckets should have event notifications enabled,FAIL,FAIL
+checkov,CKV2_AWS_62,aws_s3_bucket.public_assets,,Ensure S3 buckets should have event notifications enabled,FAIL,FAIL
+checkov,CKV2_AWS_62,aws_s3_bucket.raw_landing,,Ensure S3 buckets should have event notifications enabled,FAIL,FAIL
+checkov,CKV_AWS_118,aws_db_instance.clinical,,Ensure that enhanced monitoring is enabled for Amazon RDS instances,FAIL,FAIL
+checkov,CKV_AWS_129,aws_db_instance.clinical,,Ensure that respective logs of Amazon Relational Database Service (Amazon RDS) are enabled,FAIL,FAIL
+checkov,CKV_AWS_133,aws_db_instance.clinical,,Ensure that RDS instances has backup policy,FAIL,FAIL
+checkov,CKV_AWS_136,aws_ecr_repository.document_parser,,Ensure that ECR repositories are encrypted using KMS,FAIL,FAIL
+checkov,CKV_AWS_144,aws_s3_bucket.audit_logs,,Ensure that S3 bucket has cross-region replication enabled,FAIL,FAIL
+checkov,CKV_AWS_144,aws_s3_bucket.public_assets,,Ensure that S3 bucket has cross-region replication enabled,FAIL,FAIL
+checkov,CKV_AWS_144,aws_s3_bucket.raw_landing,,Ensure that S3 bucket has cross-region replication enabled,FAIL,FAIL
+checkov,CKV_AWS_145,aws_s3_bucket.audit_logs,,Ensure that S3 buckets are encrypted with KMS by default,FAIL,FAIL
+checkov,CKV_AWS_145,aws_s3_bucket.public_assets,,Ensure that S3 buckets are encrypted with KMS by default,FAIL,FAIL
+checkov,CKV_AWS_145,aws_s3_bucket.raw_landing,,Ensure that S3 buckets are encrypted with KMS by default,FAIL,FAIL
+checkov,CKV_AWS_157,aws_db_instance.clinical,,Ensure that RDS instances have Multi-AZ enabled,FAIL,FAIL
+checkov,CKV_AWS_158,aws_cloudwatch_log_group.document_parser,,Ensure that CloudWatch Log Group is encrypted by KMS,FAIL,FAIL
+checkov,CKV_AWS_16,aws_db_instance.clinical,,Ensure all data stored in the RDS is securely encrypted at rest,FAIL,FAIL
+checkov,CKV_AWS_161,aws_db_instance.clinical,,Ensure RDS database has IAM authentication enabled,FAIL,FAIL
+checkov,CKV_AWS_163,aws_ecr_repository.document_parser,,Ensure ECR image scanning on push is enabled,FAIL,-
+checkov,CKV_AWS_17,aws_db_instance.clinical,,Ensure all data stored in RDS is not publicly accessible,FAIL,FAIL
+checkov,CKV_AWS_18,aws_s3_bucket.audit_logs,,Ensure the S3 bucket has access logging enabled,FAIL,FAIL
+checkov,CKV_AWS_18,aws_s3_bucket.public_assets,,Ensure the S3 bucket has access logging enabled,FAIL,FAIL
+checkov,CKV_AWS_18,aws_s3_bucket.raw_landing,,Ensure the S3 bucket has access logging enabled,FAIL,FAIL
+checkov,CKV_AWS_21,aws_s3_bucket.audit_logs,,Ensure all data stored in the S3 bucket have versioning enabled,FAIL,-
+checkov,CKV_AWS_21,aws_s3_bucket.public_assets,,Ensure all data stored in the S3 bucket have versioning enabled,FAIL,FAIL
+checkov,CKV_AWS_21,aws_s3_bucket.raw_landing,,Ensure all data stored in the S3 bucket have versioning enabled,FAIL,FAIL
+checkov,CKV_AWS_226,aws_db_instance.clinical,,Ensure DB instance gets all minor upgrades automatically,FAIL,FAIL
+checkov,CKV_AWS_23,aws_security_group.db,,Ensure every security group and rule has a description,FAIL,FAIL
+checkov,CKV_AWS_23,aws_security_group.pipeline,,Ensure every security group and rule has a description,FAIL,FAIL
+checkov,CKV_AWS_252,aws_cloudtrail.main,,Ensure CloudTrail defines an SNS Topic,FAIL,FAIL
+checkov,CKV_AWS_26,aws_sns_topic.security_alerts,,Ensure all data stored in the SNS topic is encrypted,-,FAIL
+checkov,CKV_AWS_273,aws_iam_user.ci_deployer,,Ensure access is controlled through SSO and not AWS IAM defined users,FAIL,FAIL
+checkov,CKV_AWS_274,aws_iam_role_policy_attachment.github_deploy,,"Disallow IAM roles, users, and groups from using the AWS AdministratorAccess policy",FAIL,FAIL
+checkov,CKV_AWS_274,aws_iam_user_policy_attachment.ci_deployer,,"Disallow IAM roles, users, and groups from using the AWS AdministratorAccess policy",FAIL,FAIL
+checkov,CKV_AWS_288,aws_iam_role_policy.pipeline_task,,Ensure IAM policies does not allow data exfiltration,FAIL,FAIL
+checkov,CKV_AWS_289,aws_iam_role_policy.pipeline_task,,Ensure IAM policies does not allow permissions management / resource exposure without constraints,FAIL,FAIL
+checkov,CKV_AWS_290,aws_iam_role_policy.pipeline_task,,Ensure IAM policies does not allow write access without constraints,FAIL,FAIL
+checkov,CKV_AWS_293,aws_db_instance.clinical,,Ensure that AWS database instances have deletion protection enabled,FAIL,-
+checkov,CKV_AWS_336,aws_ecs_task_definition.document_parser,,Ensure ECS containers are limited to read-only access to root filesystems,FAIL,FAIL
+checkov,CKV_AWS_338,aws_cloudwatch_log_group.document_parser,,Ensure CloudWatch log groups retains logs for at least 1 year,FAIL,FAIL
+checkov,CKV_AWS_35,aws_cloudtrail.main,,Ensure CloudTrail logs are encrypted at rest using KMS CMKs,FAIL,FAIL
+checkov,CKV_AWS_353,aws_db_instance.clinical,,Ensure that RDS instances have performance insights enabled,FAIL,FAIL
+checkov,CKV_AWS_355,aws_iam_role_policy.pipeline_task,,"Ensure no IAM policies documents allow ""*"" as a statement's resource for restrictable actions",FAIL,FAIL
+checkov,CKV_AWS_36,aws_cloudtrail.main,,Ensure CloudTrail log file validation is enabled,FAIL,-
+checkov,CKV_AWS_382,aws_security_group.db,,Ensure no security groups allow egress from 0.0.0.0:0 to port -1,FAIL,FAIL
+checkov,CKV_AWS_382,aws_security_group.pipeline,,Ensure no security groups allow egress from 0.0.0.0:0 to port -1,FAIL,FAIL
+checkov,CKV_AWS_40,aws_iam_user_policy_attachment.ci_deployer,,Ensure IAM policies are attached only to groups or roles (Reducing access management complexity may in-turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.),FAIL,FAIL
+checkov,CKV_AWS_51,aws_ecr_repository.document_parser,,Ensure ECR Image Tags are immutable,FAIL,FAIL
+checkov,CKV_AWS_54,aws_s3_bucket_public_access_block.raw_landing,,Ensure S3 bucket has block public policy enabled,FAIL,-
+checkov,CKV_AWS_56,aws_s3_bucket_public_access_block.raw_landing,,Ensure S3 bucket has 'restrict_public_buckets' enabled,FAIL,-
+checkov,CKV_AWS_66,aws_cloudwatch_log_group.document_parser,,Ensure that CloudWatch Log Group specifies retention days,FAIL,FAIL
+checkov,CKV_AWS_67,aws_cloudtrail.main,,Ensure CloudTrail is enabled in all Regions,FAIL,-
+trivy,AWS-0014,aws_cloudtrail.main,MEDIUM,Cloudtrail should be enabled in all regions regardless of where your AWS resources are generally homed,FAIL,-
+trivy,AWS-0015,aws_cloudtrail.main,HIGH,CloudTrail should use Customer managed keys to encrypt the logs,FAIL,FAIL
+trivy,AWS-0016,aws_cloudtrail.main,HIGH,Cloudtrail log validation should be enabled to prevent tampering of log data,FAIL,-
+trivy,AWS-0017,aws_cloudwatch_log_group.document_parser,LOW,CloudWatch log groups should be encrypted using CMK,FAIL,FAIL
+trivy,AWS-0030,aws_ecr_repository.document_parser,HIGH,ECR repository has image scans disabled.,FAIL,-
+trivy,AWS-0031,aws_ecr_repository.document_parser,HIGH,ECR images tags shouldn't be mutable.,FAIL,FAIL
+trivy,AWS-0033,aws_ecr_repository.document_parser,LOW,ECR Repository should use customer managed keys to allow more control,FAIL,FAIL
+trivy,AWS-0077,aws_db_instance.clinical,MEDIUM,RDS Cluster and RDS instance should have backup retention longer than default 1 day,FAIL,FAIL
+trivy,AWS-0080,aws_db_instance.clinical,HIGH,RDS encryption has not been enabled at a DB Instance level.,FAIL,FAIL
+trivy,AWS-0086,aws_s3_bucket.audit_logs,HIGH,S3 Access block should block public ACL,FAIL,-
+trivy,AWS-0087,aws_s3_bucket.audit_logs,HIGH,S3 Access block should block public policy,FAIL,-
+trivy,AWS-0087,aws_s3_bucket_public_access_block.raw_landing,HIGH,S3 Access block should block public policy,FAIL,-
+trivy,AWS-0089,aws_s3_bucket.audit_logs,LOW,S3 Bucket Logging,FAIL,FAIL
+trivy,AWS-0089,aws_s3_bucket.public_assets,LOW,S3 Bucket Logging,FAIL,FAIL
+trivy,AWS-0089,aws_s3_bucket.raw_landing,LOW,S3 Bucket Logging,FAIL,FAIL
+trivy,AWS-0090,aws_s3_bucket.audit_logs,MEDIUM,S3 Data should be versioned,FAIL,-
+trivy,AWS-0090,aws_s3_bucket.public_assets,MEDIUM,S3 Data should be versioned,FAIL,FAIL
+trivy,AWS-0090,aws_s3_bucket.raw_landing,MEDIUM,S3 Data should be versioned,FAIL,FAIL
+trivy,AWS-0091,aws_s3_bucket.audit_logs,HIGH,S3 Access Block should Ignore Public ACL,FAIL,-
+trivy,AWS-0093,aws_s3_bucket.audit_logs,HIGH,S3 Access block should restrict public bucket to limit access,FAIL,-
+trivy,AWS-0093,aws_s3_bucket_public_access_block.raw_landing,HIGH,S3 Access block should restrict public bucket to limit access,FAIL,-
+trivy,AWS-0094,aws_s3_bucket.audit_logs,LOW,S3 buckets should each define an aws_s3_bucket_public_access_block,FAIL,-
+trivy,AWS-0095,aws_sns_topic.security_alerts,HIGH,Unencrypted SNS topic.,-,FAIL
+trivy,AWS-0104,aws_security_group.db,CRITICAL,A security group rule should not allow unrestricted egress to any IP address.,FAIL,FAIL
+trivy,AWS-0104,aws_security_group.pipeline,CRITICAL,A security group rule should not allow unrestricted egress to any IP address.,FAIL,FAIL
+trivy,AWS-0124,aws_security_group.db,LOW,Missing description for security group rule.,FAIL,FAIL
+trivy,AWS-0124,aws_security_group.pipeline,LOW,Missing description for security group rule.,FAIL,FAIL
+trivy,AWS-0132,aws_s3_bucket.audit_logs,HIGH,S3 encryption should use Customer Managed Keys,FAIL,FAIL
+trivy,AWS-0132,aws_s3_bucket.public_assets,HIGH,S3 encryption should use Customer Managed Keys,FAIL,FAIL
+trivy,AWS-0132,aws_s3_bucket.raw_landing,HIGH,S3 encryption should use Customer Managed Keys,FAIL,FAIL
+trivy,AWS-0133,aws_db_instance.clinical,LOW,Enable Performance Insights to detect potential problems,FAIL,FAIL
+trivy,AWS-0143,aws_iam_user.ci_deployer,LOW,IAM policies should not be granted directly to users.,FAIL,FAIL
+trivy,AWS-0162,aws_cloudtrail.main,LOW,CloudTrail logs should be stored in S3 and also sent to CloudWatch Logs,FAIL,FAIL
+trivy,AWS-0163,aws_s3_bucket.audit_logs,LOW,You should enable bucket access logging on the CloudTrail S3 bucket.,FAIL,FAIL
+trivy,AWS-0176,aws_db_instance.clinical,MEDIUM,RDS IAM Database Authentication Disabled,FAIL,FAIL
+trivy,AWS-0177,aws_db_instance.clinical,MEDIUM,RDS Deletion Protection Disabled,FAIL,-
+trivy,AWS-0180,aws_db_instance.clinical,HIGH,RDS Publicly Accessible,FAIL,FAIL
+trivy,AWS-0345,aws_iam_role_policy.pipeline_task,HIGH,Disallow unrestricted S3 IAM Policies,FAIL,-
