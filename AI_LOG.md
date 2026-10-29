@@ -22,7 +22,7 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 | # | Task | Tool | Approach | Used as-is / modified / discarded, and why |
 |---|---|---|---|---|
 | 1 | Understanding the brief | Claude Code | Asked for a plain-language explanation of the scenario, the problems, and what the assignment is testing | Used for orientation only |
-| 2 | First-pass review and severity | Claude Code | Read `main.tf` and drafted candidate findings and severities, before running scanners | **Modified.** Severity calls were decided by me: Admin CI identity as #1, landing bucket as High, ship the bucket guardrail flags behind a pre-check, adopt GuardDuty in code with all-severity alerts |
+| 2 | First-pass review and severity | Claude Code | Read `main.tf` and drafted candidate findings and severities, before running scanners | **Used, with my approval.** Claude recommended four calls and I approved each: Admin CI identity as #1, landing bucket as High, ship the bucket guardrail flags behind a pre-check, adopt GuardDuty in code with all-severity alerts |
 | 3 | Scanner runs | Checkov, Trivy | Ran on the original and on the fixed file; findings tabulated in `scans/results.csv` | **Used as a cross-check.** Discarded the S3 housekeeping noise (18 of Checkov's 59) and the scanners' own advice on `storage_encrypted` and tag immutability, which would break production. Neither scanner flagged several of the worst items (see `FINDINGS.md`) |
 | 4 | Verifying behaviour | Claude Code (web fetch) | Checked: how S3 defines a "public" policy, RDS backup-retention outage, `ForceNew` attributes in provider source, `skip_destroy` semantics, RDS Blue/Green encryption and switchover, SCP scope, the HIPAA Security Rule's required vs addressable labels, the breach-notification sections (164.402, 164.404, 164.410), and AWS's HIPAA-eligible services list | **All used.** One was a **correction of the model's assumption**: it had assumed RDS Blue/Green could not encrypt an unencrypted instance. The docs say it can (KMS key on the green side). Adopted as the encryption plan |
 | 5 | `main.tf` changes | Claude Code | Drafted the changes with a three-part test for inclusion: no destroy/replace, no reboot, no removal of access something unknown may use. Ran `terraform fmt` and `validate` | **Modified during testing, see #6 and #7** |
@@ -31,6 +31,13 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 | 8 | Guardrail workflow | Claude Code | Wrote the workflow, tripwire script and plan gate; tested locally (see `GUARDRAIL.md`) | Used. **Not run on GitHub**, and the plan job was never run against real AWS |
 | 9 | `FINDINGS.md`, `ROLLOUT.md`, `INCIDENT.md` | Claude Code | Drafted each from the analysis above; trimmed the rollout from 807 to about 650 words to fit one page | Drafts. See "My review" below |
 | 10 | CTO summary and reflection | Claude Code | First drafts | **Mine to rewrite.** See below |
+
+## Decisions I made and directions I gave
+
+- Chose to use scanners and approved installing Checkov and Trivy. Chose to work in checkpoints, where Claude proposes and I decide.
+- Approved Claude's four severity and scope recommendations (row 2) at the first checkpoint.
+- Decided not to inspect any real AWS account, so nothing from my employer's systems is in this submission.
+- Directed the rewrite for shorter, more precise writing, and for a HIPAA reference on each finding.
 
 ## Ideas I contributed
 
