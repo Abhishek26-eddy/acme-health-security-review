@@ -1,0 +1,141 @@
+{
+    "failed_checks": [
+        {
+            "file": "/main.tf",
+            "findings": [
+                {
+                    "resource": "aws_cloudtrail.main",
+                    "check_ids": [
+                        "CKV2_AWS_10",
+                        "CKV_AWS_252",
+                        "CKV_AWS_35"
+                    ]
+                },
+                {
+                    "resource": "aws_cloudwatch_log_group.document_parser",
+                    "check_ids": [
+                        "CKV_AWS_158",
+                        "CKV_AWS_338",
+                        "CKV_AWS_66"
+                    ]
+                },
+                {
+                    "resource": "aws_db_instance.clinical",
+                    "check_ids": [
+                        "CKV2_AWS_30",
+                        "CKV2_AWS_60",
+                        "CKV_AWS_118",
+                        "CKV_AWS_129",
+                        "CKV_AWS_133",
+                        "CKV_AWS_157",
+                        "CKV_AWS_16",
+                        "CKV_AWS_161",
+                        "CKV_AWS_17",
+                        "CKV_AWS_226",
+                        "CKV_AWS_353"
+                    ]
+                },
+                {
+                    "resource": "aws_ecr_repository.document_parser",
+                    "check_ids": [
+                        "CKV_AWS_136",
+                        "CKV_AWS_51"
+                    ]
+                },
+                {
+                    "resource": "aws_ecs_task_definition.document_parser",
+                    "check_ids": [
+                        "CKV_AWS_336"
+                    ]
+                },
+                {
+                    "resource": "aws_guardduty_detector.main",
+                    "check_ids": [
+                        "CKV2_AWS_3"
+                    ]
+                },
+                {
+                    "resource": "aws_iam_role_policy.pipeline_task",
+                    "check_ids": [
+                        "CKV_AWS_288",
+                        "CKV_AWS_289",
+                        "CKV_AWS_290",
+                        "CKV_AWS_355"
+                    ]
+                },
+                {
+                    "resource": "aws_iam_role_policy_attachment.github_deploy",
+                    "check_ids": [
+                        "CKV_AWS_274"
+                    ]
+                },
+                {
+                    "resource": "aws_iam_user.ci_deployer",
+                    "check_ids": [
+                        "CKV_AWS_273"
+                    ]
+                },
+                {
+                    "resource": "aws_iam_user_policy_attachment.ci_deployer",
+                    "check_ids": [
+                        "CKV_AWS_274",
+                        "CKV_AWS_40"
+                    ]
+                },
+                {
+                    "resource": "aws_s3_bucket.audit_logs",
+                    "check_ids": [
+                        "CKV2_AWS_61",
+                        "CKV2_AWS_62",
+                        "CKV_AWS_144",
+                        "CKV_AWS_145",
+                        "CKV_AWS_18"
+                    ]
+                },
+                {
+                    "resource": "aws_s3_bucket.public_assets",
+                    "check_ids": [
+                        "CKV2_AWS_61",
+                        "CKV2_AWS_62",
+                        "CKV_AWS_144",
+                        "CKV_AWS_145",
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                },
+                {
+                    "resource": "aws_s3_bucket.raw_landing",
+                    "check_ids": [
+                        "CKV2_AWS_61",
+                        "CKV2_AWS_62",
+                        "CKV_AWS_144",
+                        "CKV_AWS_145",
+                        "CKV_AWS_18",
+                        "CKV_AWS_21"
+                    ]
+                },
+                {
+                    "resource": "aws_security_group.db",
+                    "check_ids": [
+                        "CKV_AWS_23",
+                        "CKV_AWS_382"
+                    ]
+                },
+                {
+                    "resource": "aws_security_group.pipeline",
+                    "check_ids": [
+                        "CKV2_AWS_5",
+                        "CKV_AWS_23",
+                        "CKV_AWS_382"
+                    ]
+                },
+                {
+                    "resource": "aws_sns_topic.security_alerts",
+                    "check_ids": [
+                        "CKV_AWS_26"
+                    ]
+                }
+            ]
+        }
+    ]
+}

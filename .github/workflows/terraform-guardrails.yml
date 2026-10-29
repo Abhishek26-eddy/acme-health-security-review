@@ -1,0 +1,122 @@
+name: terraform-guardrails
+
+# Runs on every pull request that touches Terraform. See FINDINGS.md section
+# "Guardrail (Part 2b)" for what this does and does not catch.
+#
+# Known gaps, stated up front:
+#  - Actions are pinned to major-version tags, not commit SHAs. Pin them to
+#    SHAs (and let Dependabot bump them) before relying on this in production.
+#  - This only protects main if it is a REQUIRED status check and CODEOWNERS
+#    covers .github/ and scripts/. Otherwise a PR can simply weaken it.
+
+on:
+  pull_request:
+    paths:
+      - "**.tf"
+      - ".checkov.baseline"
+      - "scripts/**"
+      - ".github/workflows/terraform-guardrails.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tf-guardrails-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    name: fmt, validate, scanner, tripwires
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      # -backend=false: no AWS access and no state needed to validate syntax,
+      # references and types. This cannot see live resources.
+      - name: terraform init and validate
+        run: |
+          terraform init -backend=false -input=false
+          terraform validate
+
+      # The baseline holds today's known findings, so the job fails only on
+      # NEW ones (a ratchet), not on the existing debt. Regenerate it, in its
+      # own reviewed PR, only when debt is paid down:
+      #   checkov -d . --framework terraform --create-baseline
+      # Two checks are skipped because they are pure noise for this repo
+      # (cross-region replication and S3 event notifications on every bucket).
+      - name: Checkov (new findings only)
+        run: |
+          python3 -m pip install --quiet checkov==3.3.30
+          checkov -d . --framework terraform \
+            --baseline .checkov.baseline \
+            --skip-check CKV_AWS_144,CKV2_AWS_62 \
+            --compact --quiet
+
+      # Covers what the scanners missed on the original file: open Postgres,
+      # wildcard OIDC trust, wildcard principals, DEBUG logging, plaintext
+      # secret defaults, IAM keys, and the settings that destroy data.
+      - name: Tripwires
+        run: scripts/tripwires.sh .
+
+      # The plan gate below is only worth having if it actually blocks things,
+      # so its logic is tested here on every run, without needing AWS.
+      - name: Test the plan gate
+        run: scripts/test-plan-gate.sh
+
+  # Optional but the most valuable job here. Needs a READ-ONLY role in AWS and
+  # the repository variable PLAN_ROLE_ARN. Skipped (not failed) if it is unset.
+  #
+  # Security note: this executes the pull request's Terraform with that role.
+  # Keep the role read-only, trust only "repo:<org>/<repo>:pull_request" in its
+  # OIDC policy, and never switch this workflow to pull_request_target.
+  plan-gate:
+    name: plan must not delete or replace anything unexpected
+    if: ${{ vars.PLAN_ROLE_ARN != '' }}
+    needs: static
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+          terraform_wrapper: false
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.PLAN_ROLE_ARN }}
+          aws-region: us-east-1
+
+      # -lock=false: the role is read-only, and a PR plan must not hold the
+      # state lock that a real apply needs.
+      - name: terraform plan
+        run: |
+          terraform init -input=false
+          terraform plan -input=false -lock=false -out=tfplan
+          terraform show -json tfplan > plan.json
+
+      # A replacement shows up as actions ["delete","create"]. This is the check
+      # that would have stopped storage_encrypted = true on the live database.
+      # aws_ecs_task_definition is allowed because every edit to it is a
+      # replacement (and skip_destroy keeps the old revision). Anything else
+      # needs a human to look.
+      - name: Fail on unexpected delete or replace
+        run: scripts/plan-gate.sh plan.json aws_ecs_task_definition
