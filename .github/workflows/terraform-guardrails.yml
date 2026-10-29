@@ -58,7 +58,7 @@ jobs:
       # (cross-region replication and S3 event notifications on every bucket).
       - name: Checkov (new findings only)
         run: |
-          python3 -m pip install --quiet checkov==3.3.30
+          pipx install checkov==3.3.30
           checkov -d . --framework terraform \
             --baseline .checkov.baseline \
             --skip-check CKV_AWS_144,CKV2_AWS_62 \

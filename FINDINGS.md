@@ -6,6 +6,8 @@ Severity is the realistic damage to patient data and how many steps an attacker 
 
 ## 1a. Findings
 
+The three Critical findings (F1 to F3) are the ones Part 2 does not change. That is deliberate: each needs evidence or a coordinated step first, and the reasons and the safe order are in `ROLLOUT.md`. Part 2 fixes what can be fixed safely in one apply.
+
 | ID | Severity | Finding | After Part 2 | HIPAA hook (45 CFR) |
 |---|---|---|---|---|
 | F1 | Critical | `ci-deployer`: permanent admin key, secret in state | Not changed (live pipelines use it) | 164.312(a)(2)(i), (d) |

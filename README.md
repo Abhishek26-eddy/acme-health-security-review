@@ -2,6 +2,13 @@
 
 Century Health DevSecOps take-home. Nothing here was deployed and no AWS account was used.
 
+## In 30 seconds
+
+- **Review:** 16 findings in `main.tf`. The worst three: a permanent admin CI key, a deploy role any repo in the GitHub org can use, and a clinical database reachable from the internet.
+- **Fixes:** Part 2 changes only what is safe in one apply (nothing destroyed or replaced, no reboot, no unknown user cut off). The rest is left alone with the reason beside the code. For example, setting `storage_encrypted = true` would delete the live database.
+- **Plans:** `ROLLOUT.md` orders the work today / this week / this quarter. `INCIDENT.md` shows a copy of the patient database shared to an outside account, and why the logging gaps from Part 1 mean we can't say whether it was read.
+- **Tools:** `AI_LOG.md` lists what AI and the scanners were used for.
+
 ## Read in this order
 
 | File | Part | What it is |
