@@ -43,7 +43,7 @@ Where: `aws_iam_role.github_deploy` and its admin attachment.
 
 The trust policy accepts any token whose `sub` matches `repo:acme-health/*`: every repo, every branch, including pull requests. The role is `AdministratorAccess`. Anyone who can open a PR in any repo in the org can add a workflow, assume the role and own the account.
 
-Fix: pin `sub` to the infrastructure repo and `ref:refs/heads/main` (or a GitHub Environment with reviewers). Split a read-only plan role (pull requests) from a scoped apply role (main).
+Fix: first prove a break-glass admin path by running an apply with it. Then create a second role trusted only for the infra repo's `production` GitHub Environment (required reviewers), pinned by `repository_id` (an immutable ID; a repo name can be claimed by someone else after a rename or delete), switch the workflow to it, and delete the old role. Never edit the trust of the role that is running. Use a separate read-only role for pull-request plans.
 
 Part 2: not changed on purpose. This role applies this code. A wrong guess at the repo or branch name locks out the next apply and any rollback. The real `sub` values are in CloudTrail (`AssumeRoleWithWebIdentity`).
 
@@ -65,7 +65,7 @@ The policy grants `Principal "*"` with only a source-IP condition. An IP is a lo
 
 I rate it High, not Critical: it isn't world-readable today (two /24s). It becomes Critical if those ranges are shared hosting space.
 
-Fix: give each partner an authenticated path scoped to its own prefix (a role in their account, SFTP with per-partner directories, or pre-signed URLs). Interim: one statement per partner allowing only `incoming/<partner_id>/*` from that partner's ranges. Any explicit Deny must carve out our pipeline and break-glass roles, because a bucket Deny also hits our own principals. An SCP can't fix this: SCPs don't apply to anonymous callers.
+Fix: first read the new data events. If partners only write, drop `GetObject` and `ListBucket` at once. Interim: one statement per partner allowing only `incoming/<partner_id>/*` from that partner's ranges; if two partners share a /24, IP rules can't separate them. Long term: AWS Transfer Family (SFTP) for partners who can't change their integration (pre-signed URLs force a rewrite they can't do). Tell partners their upload workflow won't change, record any exception as an accepted risk, and set a migration date. Any explicit Deny must carve out our pipeline and break-glass roles, because a bucket Deny also hits our own principals. An SCP can't fix this: SCPs don't apply to anonymous callers.
 
 Part 2: both flags set to true. Per the S3 docs, a policy granting only narrow fixed `aws:SourceIp` ranges (nothing wider than a /8) is non-public, so partners are unaffected. Gate: `aws s3api get-bucket-policy-status` must return `IsPublic: false` before apply. CloudTrail data events added for the bucket. The policy itself is unchanged, since removing `GetObject` or `ListBucket` could break a partner I know nothing about.
 
@@ -95,7 +95,7 @@ Where: `aws_iam_role_policy.pipeline_task`.
 
 `s3:*` on every bucket (including delete and policy changes), `GetSecretValue` on every secret, `ecs:RunTask` plus `iam:PassRole` on `*`. This role runs inside the container that parses untrusted partner PDFs, and OCR and PDF libraries have a long record of memory-safety bugs. A parser exploit inherits all of it: it reads every bucket and secret, deletes audit logs, rewrites bucket policies, and uses `PassRole` to escalate if a stronger ECS-assumable role exists. Open egress (F13) lets it send credentials out.
 
-Fix: scope S3 to named buckets and prefixes, secrets to named ARNs, `RunTask` to the `document-parser` family, `PassRole` to the two roles in this file with `iam:PassedToService`. Derive the lists from what the role actually does: CloudTrail already records `GetSecretValue` and `RunTask`; S3 needs the new data events.
+Fix: build `acme-pipeline-task-v2` with a narrow policy, test it off-peak (06:00 to 22:00 UTC), then point Airflow at the new task revision; rolling back is pointing it back. Attaching a narrow policy beside the old one tests nothing, because IAM permissions add up. Derive the policy from evidence: CloudTrail has `GetSecretValue` and `RunTask`; S3 needs data events on all buckets for a week. Expect S3 read on `incoming/*` (`ListBucket` goes on the bucket ARN with an `s3:prefix` condition) plus named output prefixes, one secret ARN, and no `RunTask` or `PassRole` at all if Airflow launches the tasks. `PassRole` isn't logged; read the roles from the task definitions that `RunTask` launches.
 
 Part 2: the policy is unchanged (the plan shows nothing on it). A separate policy adds two explicit denies: touching the audit bucket, and editing bucket policies, public access blocks or versioning. A Deny beats the `s3:*` allow, and a parser has no reason to do either.
 
@@ -105,7 +105,7 @@ Where: `LOG_LEVEL = DEBUG` in the task definition; `aws_cloudwatch_log_group.doc
 
 The comment says DEBUG logs "the extracted text of every page". That puts PHI where far more people can read it than can read the database, kept forever, and impossible to delete on request.
 
-Fix: INFO in production. Decide retention with the privacy lead, then purge existing PHI from the log group.
+Fix: INFO now. Restrict who can read the log group and list every sink (exports, Datadog, Splunk) before deleting anything. Then set a short retention so the PHI ages out, with an encrypted export under legal hold if counsel requires one. Sign-off: privacy officer, counsel, security and data leads, and the partner contracts. We can't prove who has read these logs (I couldn't confirm from AWS's docs that reads of log events appear in CloudTrail), so treat past exposure as a potential disclosure.
 
 Part 2: the level is now a variable with the same value, so this apply shows no change, and the task definition gets `skip_destroy = true`. The flip to INFO is the next apply. `container_definitions` is `ForceNew`, so any edit replaces the task definition, and by default Terraform then deregisters the old revision. The provider reads `skip_destroy` from the value already in state, so it has to be live first. Done together, any DAG pinned to a revision (say `document-parser:17`) fails to launch at 22:00. No retention set: existing logs hold PHI and may be evidence, and deletion is irreversible.
 
@@ -115,7 +115,7 @@ Where: `aws_cloudtrail.main`, `aws_s3_bucket.audit_logs` and its policy.
 
 The trail covers one region, has no log file validation and no S3 data events, so we can see that someone listed buckets but not which patient files they read. The audit bucket has `force_destroy = true`, no public access block, no versioning and no TLS-only rule. An attacker with admin works in another region, deletes the logs, and nobody can prove what happened.
 
-Fix: multi-region, validation, data events on PHI buckets, a hardened bucket. Later: Object Lock and a separate log-archive account.
+Fix: multi-region, validation, data events on PHI buckets, a hardened bucket. Database audit logging: `pgaudit` object-level on patient tables plus connection logs, streamed to CloudWatch, with the app moved off `acme_admin`. That needs a reboot, so it shares the backup window, and statement text can contain PHI, so lock that log group down too. Later: Object Lock and a separate log-archive account.
 
 Part 2: all of it except Object Lock, which is a one-way door. The new `event_selector` must keep `include_management_events = true`, or CloudTrail silently stops logging management calls. Data events are billed per event; check the cost after a week.
 
@@ -125,9 +125,9 @@ Where: absent from `main.tf`. GuardDuty was enabled by hand, so it is unmanaged 
 
 In Part 4 the finding was created at 03:01 and found by chance at 10:14, over seven hours later.
 
-Fix: bring GuardDuty into code and send every severity to a person. The finding that preceded the Part 4 compromise was severity 2.0 (Low); an alert on severity 7 and up would never have fired.
+Fix: bring GuardDuty into code and route by urgency. A short list of high-risk calls (`CreateUser`, `CreateAccessKey`, `ModifyDBSnapshotAttribute`, `StopLogging`, root sign-in) pages someone whatever GuardDuty's severity; GuardDuty Low goes to a daily digest. The finding before the Part 4 compromise was 2.0 (Low), so a severity 7 alert never fires, and a daily digest would miss a 3am attack; a `CreateUser` alert at 02:51 would have fired 50 minutes before the exfiltration. First confirm a 24/7 on-call exists; if not, paging is useless and a managed detection service is the alternative.
 
-Part 2: imports the existing detector (ID from the finding ARN) rather than creating a second one, plus an EventBridge rule on all findings, an SNS topic, and an optional email subscription. The plan must say "1 to import". Someone still has to subscribe and read it.
+Part 2: imports the existing detector (ID from the finding ARN) rather than creating a second one, plus EventBridge rules on all findings, on the high-risk calls above, and on root sign-in, all to one SNS topic (splitting paging from the digest waits for an on-call), and an optional email subscription. The plan must say "1 to import", and one alert is expected from our own `UpdateTrail`. Someone still has to subscribe and read it.
 
 ### F11. Medium: state is a secret store with no lock
 
@@ -179,7 +179,7 @@ Not visible in this file, but I'd check on day one:
 
 1. A signed AWS Business Associate Agreement, and PHI only on eligible services. Everything in this file is on AWS's HIPAA-eligible list. The alert topic must stay PHI-free: metadata only.
 2. A data inventory: which partner's PHI sits in which prefix and table, and what happens to it when a partner leaves. "Minimum necessary" (F4, F7, F8) can't be enforced without it.
-3. Account basics outside Terraform: MFA or SSO for people, root locked away, account-wide S3 Block Public Access, a region restriction so nothing runs where the trail can't see, Config and Security Hub.
+3. Account basics outside Terraform. The cheapest two with the biggest payoff: root MFA and lockdown (free, ten minutes, blocks account takeover, though it wouldn't have stopped Part 4, which used access keys), then account-wide S3 Block Public Access after checking `get-bucket-policy-status` on every bucket. Then SSO, a region restriction so nothing runs where the trail can't see, and Config and Security Hub, which add cost and noise without immediate protection.
 4. A documented risk analysis (164.308(a)(1)(ii)(A), required). This review is an input to it, not a replacement.
 
 ## Reviewed and fine

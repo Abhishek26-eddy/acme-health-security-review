@@ -678,7 +678,11 @@ data "aws_iam_policy_document" "security_alerts" {
     condition {
       test     = "ArnEquals"
       variable = "aws:SourceArn"
-      values   = [aws_cloudwatch_event_rule.guardduty_findings.arn]
+      values = [
+        aws_cloudwatch_event_rule.guardduty_findings.arn,
+        aws_cloudwatch_event_rule.high_risk_api_calls.arn,
+        aws_cloudwatch_event_rule.root_sign_in.arn,
+      ]
     }
   }
 }
@@ -701,6 +705,54 @@ resource "aws_cloudwatch_event_rule" "guardduty_findings" {
 
 resource "aws_cloudwatch_event_target" "guardduty_to_sns" {
   rule = aws_cloudwatch_event_rule.guardduty_findings.name
+  arn  = aws_sns_topic.security_alerts.arn
+}
+
+# CHANGE (new): alert on a few API calls that are rarely legitimate, whatever
+# GuardDuty's severity. In Part 4, CreateUser at 02:51 would have fired 50
+# minutes before the snapshot was shared. Same topic for now; split paging from
+# a digest once a 24/7 on-call exists (ROLLOUT.md). Expect one alert from our
+# own UpdateTrail when the Part 2 change is applied.
+resource "aws_cloudwatch_event_rule" "high_risk_api_calls" {
+  name        = "acme-high-risk-api-calls"
+  description = "IAM user and key creation, DB snapshot sharing, CloudTrail changes."
+
+  event_pattern = jsonencode({
+    source        = ["aws.iam", "aws.rds", "aws.cloudtrail"]
+    "detail-type" = ["AWS API Call via CloudTrail"]
+    detail = {
+      eventName = [
+        "CreateUser",
+        "CreateAccessKey",
+        "AttachUserPolicy",
+        "PutUserPolicy",
+        "ModifyDBSnapshotAttribute",
+        "StopLogging",
+        "DeleteTrail",
+        "UpdateTrail",
+      ]
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "high_risk_to_sns" {
+  rule = aws_cloudwatch_event_rule.high_risk_api_calls.name
+  arn  = aws_sns_topic.security_alerts.arn
+}
+
+resource "aws_cloudwatch_event_rule" "root_sign_in" {
+  name        = "acme-root-sign-in"
+  description = "Any console sign-in as the root user."
+
+  event_pattern = jsonencode({
+    source        = ["aws.signin"]
+    "detail-type" = ["AWS Console Sign In via CloudTrail"]
+    detail        = { userIdentity = { type = ["Root"] } }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "root_sign_in_to_sns" {
+  rule = aws_cloudwatch_event_rule.root_sign_in.name
   arn  = aws_sns_topic.security_alerts.arn
 }
 

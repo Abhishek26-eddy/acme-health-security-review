@@ -39,6 +39,17 @@ I used Claude Code for most of the writing and the hands-on work, and I made the
 - Decided not to inspect any real AWS account, so nothing from my employer's systems is in this submission.
 - Directed the rewrite for shorter, more precise writing, and for a HIPAA reference on each finding.
 
+## My answers to the eight problems
+
+I answered these in my own words. Claude checked them against documentation and built the changes. Two of my answers found flaws in Claude's draft plan:
+
+1. The rollout attached the new narrow policy beside the old one and ran a night with both. IAM permissions add up, so that tests nothing. Replaced with a v2 role and repointing Airflow.
+2. The rollout added exact OIDC `sub` values beside the wildcard. That is an OR, so it proves nothing. Replaced with a second role.
+
+Other changes that came from my answers: S3 data events on all buckets before narrowing anything; `RunTask` and `PassRole` are probably unnecessary on the parser role; check whether partners ever read the landing bucket and whether any share a /24; pin the GitHub trust by `repository_id` and a GitHub Environment; a plan for the PHI already in the logs (restrict access, map every sink, retention under legal hold); alert routing, CloudTrail rules for high-risk calls and an on-call check; database audit logging with `pgaudit`, including its reboot and statement-text risks; root MFA and account-wide S3 Block Public Access as the two cheapest controls; a Deny-all at T+3 in the incident and when to reorder the first steps.
+
+Claude's checks and adjustments: `repository_id` is a supported AWS condition key. AWS's docs don't confirm that reads of CloudWatch log events appear in CloudTrail, so the documents say "can't prove" instead of stating it. Two details were adjusted: `ListBucket` is granted on the bucket ARN with a prefix condition, and the role a task runs as comes from its task definition, unless overridden.
+
 ## Ideas I contributed
 
 During the work I proposed these, and they were checked against documentation before going in:
